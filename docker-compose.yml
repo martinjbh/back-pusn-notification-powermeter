@@ -1,0 +1,19 @@
+version: '3.6'
+services:
+  dividendo-back:
+    ports:
+      - "8082:8082"
+    container_name: notify-back
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - dividendo
+
+networks:
+  dividendo:
+    driver: bridge
+    name: dividendo
