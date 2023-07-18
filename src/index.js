@@ -23,7 +23,6 @@ let DB = []
 
 app.post('/subscription', async (req, res) => {
     log('/subscription')
-
     try {
         console.log(req.body)
         let msg = ""
