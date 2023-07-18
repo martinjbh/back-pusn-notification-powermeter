@@ -29,13 +29,10 @@ app.post('/subscription', async (req, res) => {
         let msg = ""
         let subscription = req.body.subscription
         let name = req.body.name.toLowerCase()
-
         let obj = {
             name,
             subscription,
-          
         }
-
         let findUserRepeat = DB.find(e => e.name === name)
 
         if (findUserRepeat) {
@@ -55,7 +52,6 @@ app.post('/subscription', async (req, res) => {
         })
     }
 })
-
 
 app.get('/db', async (req, res) => {
     log('/db')
@@ -108,16 +104,13 @@ app.post('/send-notification', async (req, res) => {
     log('/send-notification')
     try {
         let now = new Date()
-
         let { msg, name } = req.body;
-
         let payload = JSON.stringify({
             title: 'Powermate',
             message: `${msg}  ${now}`
         })
-
         let findUser = DB.find(e => e.name === name)
-
+        
         if (findUser) {
             await webpush.sendNotification(
                 findUser.subscription,
