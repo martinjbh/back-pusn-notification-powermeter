@@ -10,9 +10,9 @@ const webpush = require('./webpush');
 const { sequelize } = require('./db/db')
 // const functionsUser = require("./functions/functionsUser")
 const { log } = require("./functions/helpers")
-
+const _ = require('lodash');
 ////////SERVIDOR////////
-let port = process.env.PORT || 8081
+let port = process.env.PORT || 8083
 app.listen(port, () => {
     console.log('server run por ' + port + ' pa')
     sequelize.sync({ alter: true })
@@ -20,6 +20,27 @@ app.listen(port, () => {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // //////ROUTES////////////
 let DB = []
+
+function findObjectInArray(array, object) {
+    let res = array.find(item => _.isEqual(item, object))
+    return res;
+}
+
+function deleteSubscription(suscription, name) {
+
+    let dbAux = DB.map((elem) => {
+        if (elem.name === name) {
+            let elemAux = elem?.subscriptions?.filter(e => e.endpoint !== suscription)
+            elem.subscriptions = elemAux
+            return elem
+        }
+        else {
+            elem
+        }
+    })
+    DB = dbAux
+}
+
 
 app.post('/subscription', async (req, res) => {
     log(`/subscription - ${req?.body?.name}`)
@@ -29,13 +50,16 @@ app.post('/subscription', async (req, res) => {
         let name = req.body.name.toLowerCase()
         let obj = {
             name,
-            subscription,
+            subscriptions: [subscription]
         }
         let findUserRepeat = DB.find(e => e.name === name)
         if (findUserRepeat) {
             let newDb = DB.map((elem) => {
+
                 if (elem.name === name) {
-                    elem.subscription = subscription
+                    if (!findObjectInArray(elem.subscriptions, subscription)) {
+                        elem.subscriptions.push(subscription)
+                    }
                     return elem
                 }
                 else {
@@ -43,15 +67,16 @@ app.post('/subscription', async (req, res) => {
                 }
             })
             DB = newDb
-            msg = "Ya existe usuario con ese nombre"
+            msg = "Ya existe usuario con ese nombre se añadio otra suscripcion."
         }
         else {
             DB.push(obj)
-            msg = "Se suscribio correctamente"
+            msg = "Se suscribio correctamente por primera vez"
         }
-        return res.json({ status: 200, msg: msg, subscription: subscription })
+        return res.json({ status: 200, msg: msg })
     }
     catch (error) {
+        console.log("Entro a catch '/subscription'")
         console.log(error)
         return res.status(400).send({
             name: error.name,
@@ -89,6 +114,24 @@ app.post('/add-db', async (req, res) => {
     }
 })
 
+
+app.post('/delete-suscription', async (req, res) => {
+    log('/delete-suscription')
+    try {
+        let { endpoint, name } = req.body;
+        deleteSubscription(endpoint, name)
+        return res.json({ suscription_delete: endpoint })
+    }
+    catch (error) {
+        console.log("Entro a catch '/delete-suscription'")
+        console.log(error)
+        return res.status(400).send({
+            name: error.name,
+            msg: error.message
+        })
+    }
+})
+
 app.post('/delete-user', async (req, res) => {
     log('/delete-user')
     try {
@@ -99,6 +142,7 @@ app.post('/delete-user', async (req, res) => {
         return res.json({ user_delete: userDelete })
     }
     catch (error) {
+        console.log("Entro a catch '/delete-user'")
         console.log(error)
         return res.status(400).send({
             name: error.name,
@@ -118,30 +162,38 @@ app.post('/send-notification', async (req, res) => {
         })
         let findUser = DB.find(e => e.name === name)
         if (findUser) {
-            await webpush.sendNotification(
-                findUser.subscription,
-                payload,
-            );
-            return res.json(findUser)
+            let resAux = findUser
+            await findUser.subscriptions.forEach(async (elem) => {
+                let suscripcionBroken = ""
+                if (elem) {
+                    try {
+                        suscripcionBroken = elem
+                        await webpush.sendNotification(
+                            elem,
+                            payload,
+                        );
+                    }
+                    catch (error) {
+                        console.log("Entro en catch.")
+                        deleteSubscription(suscripcionBroken.endpoint, name)
+                        console.log("La suscripcion no existe fue eliminada de la base de datos.")
+                    }
+                }
+            })
+            return res.json(resAux)
         }
         else {
             return res.json({ msg: "Nose encontro el usuario" })
         }
     }
     catch (error) {
-        console.log(error)
+        console.log("Entro a catch '/send-notification'")
         return res.status(400).send({
             name: error.name,
             msg: error.message
         })
     }
 })
-
-
-
-
-
-
 
 
 
