@@ -29,15 +29,12 @@ function findObjectInArray(array, object) {
 function deleteSubscription(suscription, name) {
 
     let dbAux = DB.map((elem) => {
-        if (elem.name === name) {
+        if (elem?.name === name) {
             let elemAux = elem?.subscriptions?.filter(e => e.endpoint !== suscription)
             elem.subscriptions = elemAux
-            return elem
         }
-        else {
-            elem
-        }
-    })
+        return elem
+    })   
     DB = dbAux
 }
 
@@ -48,15 +45,16 @@ app.post('/subscription', async (req, res) => {
         let msg = ""
         let subscription = req.body.subscription
         let name = req.body.name.toLowerCase()
+        // console.log(req.body)
         let obj = {
             name,
             subscriptions: [subscription]
         }
-        let findUserRepeat = DB.find(e => e.name === name)
+        let findUserRepeat = DB.find(e => e?.name === name)
         if (findUserRepeat) {
             let newDb = DB.map((elem) => {
 
-                if (elem.name === name) {
+                if (elem?.name === name) {
                     if (!findObjectInArray(elem.subscriptions, subscription)) {
                         elem.subscriptions.push(subscription)
                     }
@@ -79,8 +77,8 @@ app.post('/subscription', async (req, res) => {
         console.log("Entro a catch '/subscription'")
         console.log(error)
         return res.status(400).send({
-            name: error.name,
-            msg: error.message
+            // name: error.name,
+            // msg: error.message
         })
     }
 })
@@ -93,8 +91,8 @@ app.get('/db', async (req, res) => {
     catch (error) {
         console.log(error)
         return res.status(400).send({
-            name: error.name,
-            msg: error.message
+            // name: error.name,
+            // msg: error.message
         })
     }
 })
@@ -108,8 +106,8 @@ app.post('/add-db', async (req, res) => {
     catch (error) {
         console.log(error)
         return res.status(400).send({
-            name: error.name,
-            msg: error.message
+            // name: error.name,
+            // msg: error.message
         })
     }
 })
@@ -126,8 +124,8 @@ app.post('/delete-suscription', async (req, res) => {
         console.log("Entro a catch '/delete-suscription'")
         console.log(error)
         return res.status(400).send({
-            name: error.name,
-            msg: error.message
+            // name: error.name,
+            // msg: error.message
         })
     }
 })
@@ -145,8 +143,8 @@ app.post('/delete-user', async (req, res) => {
         console.log("Entro a catch '/delete-user'")
         console.log(error)
         return res.status(400).send({
-            name: error.name,
-            msg: error.message
+            // name: error.name,
+            // msg: error.message
         })
     }
 })
