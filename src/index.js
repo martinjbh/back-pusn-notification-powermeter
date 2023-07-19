@@ -22,9 +22,8 @@ app.listen(port, () => {
 let DB = []
 
 app.post('/subscription', async (req, res) => {
-    log('/subscription')
+    log(`/subscription - ${req?.body?.name}`)
     try {
-        console.log(req.body)
         let msg = ""
         let subscription = req.body.subscription
         let name = req.body.name.toLowerCase()
@@ -33,8 +32,17 @@ app.post('/subscription', async (req, res) => {
             subscription,
         }
         let findUserRepeat = DB.find(e => e.name === name)
-
         if (findUserRepeat) {
+            let newDb = DB.map((elem) => {
+                if (elem.name === name) {
+                    elem.subscription = subscription
+                    return elem
+                }
+                else {
+                    return elem
+                }
+            })
+            DB = newDb
             msg = "Ya existe usuario con ese nombre"
         }
         else {
@@ -109,7 +117,6 @@ app.post('/send-notification', async (req, res) => {
             message: `${msg}  ${now}`
         })
         let findUser = DB.find(e => e.name === name)
-        
         if (findUser) {
             await webpush.sendNotification(
                 findUser.subscription,
@@ -129,10 +136,6 @@ app.post('/send-notification', async (req, res) => {
         })
     }
 })
-
-
-
-
 
 
 
